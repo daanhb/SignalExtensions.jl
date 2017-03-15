@@ -2,6 +2,12 @@ language: julia
 julia:
   - release
   - 0.5
+script:
+  - julia -e 'Pkg.clone(pwd())'
+  - julia -e 'Pkg.build("SignalExtensions")'
+  - julia --check-bounds=yes -e 'Pkg.test("SignalExtensions", coverage=true)'
+after_success:
+  - julia -e 'cd(Pkg.dir("SignalExtensions")); Pkg.add("Coverage"); using Coverage; Coveralls.submit(process_folder()); Codecov.submit(process_folder())'
 
 notifications:
   email: false
