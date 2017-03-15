@@ -1,3 +1,7 @@
+[![Build Status](https://travis-ci.org/daanhb/SignalExtensions.jl.svg?branch=master)](https://travis-ci.org/daanhb/SignalExtensions.jl)
+[![Coverage Status](https://coveralls.io/repos/github/daanhb/SignalExtensions.jl/badge.svg)](https://coveralls.io/github/daanhb/SignalExtensions.jl)
+
+
 # SignalExtensions.jl
 =======================
 
