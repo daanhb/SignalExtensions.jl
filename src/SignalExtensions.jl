@@ -6,9 +6,7 @@ using OffsetArrays
 
 import Base: eltype, getindex, setindex!, eachindex, collect
 
-import Base: &, |, *, transpose, ctranspose, conj, reverse
-
-import Base: convert
+import Base: transpose, ctranspose, conj, reverse
 
 
 # A collection of useful functions
@@ -36,10 +34,14 @@ export iscompact
 
 # From extensions.jl
 # - types
-export PeriodicExtension, ZeroPadding, ConstantPadding, SymmetricExtension
+export ExtensionSequence, PeriodicExtension, ZeroPadding, ConstantPadding,
+    SymmetricExtension
 # - convenience constructors
 export symmetric_extension_wholepoint_even, symmetric_extension_wholepoint_odd,
     symmetric_extension_halfpoint_even, symmetric_extension_halfpoint_odd
+# - other methods
+export subvector, first_subindex, last_subindex, sublength
+export left_parity, right_parity, left_symmetry, right_symmetry
 
 
 end # module

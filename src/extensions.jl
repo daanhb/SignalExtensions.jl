@@ -64,10 +64,6 @@ end
 reverse(s::ExtensionSequence) = _reverse(s, subvector(s))
 _reverse(s, a) = similar(s, reverse_indices(a))
 
-transpose(s::ExtensionSequence) = reverse(s)
-
-ctranspose(s::ExtensionSequence) = conj(reverse(s))
-
 
 #######################
 # Periodic extensions
@@ -90,11 +86,12 @@ PeriodicExtension(a::AbstractVector) = PeriodicExtension{typeof(a),eltype(a)}(a)
 
 similar(p::PeriodicExtension, a) = PeriodicExtension(a)
 
-# It is faster to check whether k is in the proper range first, to avoid the expensive `mod`
 mapindex(s::PeriodicExtension, k) = _mapindex(s, k, first_subindex(s), last_subindex(s), sublength(s))
 
 # Note that we only do the expensive modulo operator after the bounds checking
 _mapindex(s::PeriodicExtension, k, i0, i1, n) = i0 <= k <= i1 ? k : mod(k-i0, n) + i0
+
+# No need to override imapindex
 
 
 #######################
@@ -118,8 +115,10 @@ ZeroPadding{A}(a::A) = ZeroPadding{A,eltype(A)}(a)
 
 similar(s::ZeroPadding, a) = ZeroPadding(a)
 
-# We override getindex to return zero outside our embedded vector.
+# We override getindex to return zero outside of our embedded vector.
 getindex(s::ZeroPadding, k::Int) = (k < first_subindex(s)) || (k > last_subindex(s)) ? zero(eltype(s)) : getindex(s.a, k)
+
+# No need to override mapindex and imapindex
 
 iscompact(::ZeroPadding) = true
 
@@ -149,10 +148,10 @@ constant(s::ConstantPadding) = s.constant
 
 similar(s::ConstantPadding, a) = ConstantPadding(a, constant(s))
 
-# We override getindex to return the constant outside our embedded vector.
+# We override getindex to return the constant outside of our embedded vector.
 getindex(s::ConstantPadding, k::Int) = (k < first_subindex(s)) || (k > last_subindex(s)) ? s.constant : getindex(s.a, k)
 
-
+# No need to override mapindex and imapindex
 
 
 #######################
@@ -250,6 +249,7 @@ mapindex_left{PT_RIGHT}(s::SymmetricExtension{:wp,PT_RIGHT}, k) = mapindex(s, 2*
 # Left half point symmetry:
 mapindex_left{PT_RIGHT}(s::SymmetricExtension{:hp,PT_RIGHT}, k) = mapindex(s, 2*first_subindex(s) - k)
 
+# No need to override imapindex
 
 # For getindex we have to use the same logic as mapindex, but now we also have to trace
 # the odd/even-ness of the symmetries.
