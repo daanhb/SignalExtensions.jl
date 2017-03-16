@@ -57,6 +57,16 @@ getindex(s::ExtensionSequence, k) = getindex(s.a, mapindex(s, k))
 
 setindex!(s::ExtensionSequence, val, k) = setindex!(s.a, val, mapindex(s, k))
 
+for op in (:conj,)
+    @eval $op(s::ExtensionSequence) = similar(s, $op(subvector(s)))
+end
+
+reverse(s::ExtensionSequence) = _reverse(s, subvector(s))
+_reverse(s, a) = similar(s, reverse_indices(a))
+
+transpose(s::ExtensionSequence) = reverse(s)
+
+ctranspose(s::ExtensionSequence) = conj(reverse(s))
 
 
 #######################
@@ -78,11 +88,13 @@ end
 
 PeriodicExtension(a::AbstractVector) = PeriodicExtension{typeof(a),eltype(a)}(a)
 
+similar(p::PeriodicExtension, a) = PeriodicExtension(a)
+
 # It is faster to check whether k is in the proper range first, to avoid the expensive `mod`
 mapindex(s::PeriodicExtension, k) = _mapindex(s, k, first_subindex(s), last_subindex(s), sublength(s))
 
+# Note that we only do the expensive modulo operator after the bounds checking
 _mapindex(s::PeriodicExtension, k, i0, i1, n) = i0 <= k <= i1 ? k : mod(k-i0, n) + i0
-
 
 
 #######################
@@ -104,10 +116,12 @@ end
 
 ZeroPadding{A}(a::A) = ZeroPadding{A,eltype(A)}(a)
 
+similar(s::ZeroPadding, a) = ZeroPadding(a)
+
 # We override getindex to return zero outside our embedded vector.
 getindex(s::ZeroPadding, k::Int) = (k < first_subindex(s)) || (k > last_subindex(s)) ? zero(eltype(s)) : getindex(s.a, k)
 
-hascompactsupport(::ZeroPadding) = true
+iscompact(::ZeroPadding) = true
 
 
 #######################
@@ -130,6 +144,10 @@ immutable ConstantPadding{A,T} <: ExtensionSequence{T}
 end
 
 ConstantPadding(a::AbstractVector, constant) = ConstantPadding{typeof(a),eltype(a)}(a, constant)
+
+constant(s::ConstantPadding) = s.constant
+
+similar(s::ConstantPadding, a) = ConstantPadding(a, constant(s))
 
 # We override getindex to return the constant outside our embedded vector.
 getindex(s::ConstantPadding, k::Int) = (k < first_subindex(s)) || (k > last_subindex(s)) ? s.constant : getindex(s.a, k)
@@ -172,6 +190,9 @@ end
 
 SymmetricExtension(a::AbstractVector) = symmetric_extension_wholepoint_even(a)
 
+similar{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}, a) =
+    SymmetricExtension{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT,typeof(a),eltype(a)}(a)
+
 # Provide four of the sixteen combinations for convenience. Construct the others by explicitly
 # specifying the type parameters symbols.
 symmetric_extension_wholepoint_even(a) =
@@ -186,6 +207,11 @@ symmetric_extension_wholepoint_odd(a) =
 symmetric_extension_halfpoint_odd(a) =
     SymmetricExtension{:hp,:hp,:odd,:odd,typeof(a),eltype(a)}(a)
 
+# We have to be careful when reversing a symmetric extension: the endpoints change places
+function reverse{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})
+    b = reverse_indices(subvector(s))
+    SymmetricExtension{PT_RIGHT,PT_LEFT,SYM_RIGHT,SYM_LEFT,typeof(b),eltype(b)}(b)
+end
 
 left_parity{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})    = SYM_LEFT
 right_parity{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT}(s::SymmetricExtension{PT_LEFT,PT_RIGHT,SYM_LEFT,SYM_RIGHT})   = SYM_RIGHT

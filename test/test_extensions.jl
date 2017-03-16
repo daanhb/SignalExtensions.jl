@@ -15,6 +15,7 @@ function test_vectors()
     test_vectors = Array(Any, 0)
     # A regular array
     push!(test_vectors, [1,2,3])
+    push!(test_vectors, [1.0+1.0im, 2.0+3.0im, 4.2-2im])
     # A LinSpace object
     push!(test_vectors, [1,2,3])
     push!(test_vectors, OffsetArray([1,2,3,4,5], -1:3))
@@ -30,10 +31,16 @@ end
 
 function test_periodic_extension(a)
     p = PeriodicExtension(a)
+
     @test eltype(p) == eltype(a)
+
+    @test !iscompact(p)
+
+    # Equality of the embedded elements
     for i in eachindex(a)
         @test p[i] == a[i]
     end
+
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
     n = lastindex-firstindex+1
@@ -42,9 +49,14 @@ function test_periodic_extension(a)
     @test p[lastindex+1] == a[firstindex]
     @test p[lastindex+2] == a[firstindex+1]
 
-    some_index = 100
-    periodic_index = mod(some_index-firstindex, n) + firstindex
-    @test p[some_index] == a[periodic_index]
+    large_index = 100
+    periodic_index = mod(large_index-firstindex, n) + firstindex
+    @test p[large_index] == a[periodic_index]
+
+    # Check time-reversal and (c)transpose
+    test_index = firstindex + 1
+    @test p'[-test_index] == conj(p[test_index])
+    @test p.'[-test_index] == p[test_index]
 end
 
 function test_zeropadding_extensions()
@@ -56,10 +68,16 @@ end
 
 function test_zeropadding_extension(a)
     p = ZeroPadding(a)
+
     @test eltype(p) == eltype(a)
+
+    @test iscompact(p)
+
+    # Equality of the embedded elements
     for i in eachindex(a)
         @test p[i] == a[i]
     end
+
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
     n = lastindex-firstindex+1
@@ -68,8 +86,13 @@ function test_zeropadding_extension(a)
     @test p[lastindex+1] == 0
     @test p[lastindex+2] == 0
 
-    # Check that the zerp has the same type as a
+    # Check that the zero has the same type as a
     @test eltype(p[firstindex-1]) == eltype(a)
+
+    # Check time-reversal and (c)transpose
+    test_index = firstindex + 1
+    @test p'[-test_index] == conj(p[test_index])
+    @test p.'[-test_index] == p[test_index]
 end
 
 function test_constantpadding_extensions()
@@ -81,10 +104,16 @@ end
 
 function test_constantpadding_extension(a, c)
     p = ConstantPadding(a, c)
+
     @test eltype(p) == eltype(a)
+
+    @test !iscompact(p)
+
+    # Equality of the embedded elements
     for i in eachindex(a)
         @test p[i] == a[i]
     end
+
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
     n = lastindex-firstindex+1
@@ -95,6 +124,11 @@ function test_constantpadding_extension(a, c)
 
     # Check that the constant has the same type as a
     @test eltype(p[firstindex-1]) == eltype(a)
+
+    # Check time-reversal and (c)transpose
+    test_index = firstindex + 1
+    @test p'[-test_index] == conj(p[test_index])
+    @test p.'[-test_index] == p[test_index]
 end
 
 function test_symmetric_extensions()
@@ -106,10 +140,16 @@ end
 
 function test_symmetric_extension(a)
     p = SymmetricExtension(a)
+
     @test eltype(p) == eltype(a)
+
+    @test !iscompact(p)
+
+    # Equality of the embedded elements
     for i in eachindex(a)
         @test p[i] == a[i]
     end
+
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
     n = lastindex-firstindex+1
@@ -130,4 +170,14 @@ function test_symmetric_extension(a)
     p4 = symmetric_extension_halfpoint_odd(a)
     @test p4[lastindex+1] == -a[lastindex-1]
     @test p4[firstindex-1] == -a[firstindex+1]
+
+    # A mixed case
+    p5 = SymmetricExtension{:wp,:hp,:even,:odd,typeof(a),eltype(a)}(a)
+    @test p5[lastindex+1] == -a[lastindex-1]
+    @test p5[firstindex-1] == a[firstindex]
+
+    # Check time-reversal and (c)transpose
+    test_index = firstindex + 1
+    @test p'[-test_index] == conj(p[test_index])
+    @test p.'[-test_index] == p[test_index]
 end
