@@ -23,20 +23,6 @@ function test_vectors()
     test_vectors
 end
 
-# Test assignment: we only test a true Vector, since one can not assign to
-test_assignment(s::ExtensionSequence) = _test_assignment(s, subvector(s))
-
-_test_assignment(s::ExtensionSequence, a::AbstractVector) = none
-_test_assignment(s::ExtensionSequence, a::OffsetArray) = do_test_assignment(s)
-_test_assignment(s::ExtensionSequence, a::Vector) = do_test_assignment(s)
-
-function do_test_assignment(s::ExtensionSequence)
-    val = one(eltype(s))
-    idx = first_subindex(s)+1
-    s[idx] = val
-    @test s[idx] == val
-end
-
 function test_periodic_extensions()
     vectors = test_vectors()
     for vector in vectors
@@ -45,7 +31,7 @@ function test_periodic_extensions()
 end
 
 function test_periodic_extension(a)
-    p = PeriodicExtension(a)
+    p = PeriodicSequence(a)
 
     @test eltype(p) == eltype(a)
 
@@ -55,8 +41,6 @@ function test_periodic_extension(a)
     for i in eachindex(a)
         @test p[i] == a[i]
     end
-
-    test_assignment(p)
 
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
@@ -84,7 +68,7 @@ function test_zeropadding_extensions()
 end
 
 function test_zeropadding_extension(a)
-    p = ZeroPadding(a)
+    p = ZeroPaddingSequence(a)
 
     @test eltype(p) == eltype(a)
 
@@ -94,8 +78,6 @@ function test_zeropadding_extension(a)
     for i in eachindex(a)
         @test p[i] == a[i]
     end
-
-    test_assignment(p)
 
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
@@ -122,7 +104,7 @@ function test_constantpadding_extensions()
 end
 
 function test_constantpadding_extension(a, c)
-    p = ConstantPadding(a, c)
+    p = ConstantPaddingSequence(a, c)
 
     @test eltype(p) == eltype(a)
 
@@ -132,8 +114,6 @@ function test_constantpadding_extension(a, c)
     for i in eachindex(a)
         @test p[i] == a[i]
     end
-
-    test_assignment(p)
 
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
@@ -160,7 +140,7 @@ function test_symmetric_extensions()
 end
 
 function test_symmetric_extension(a)
-    p = SymmetricExtension(a)
+    p = SymmetricSequence(a)
 
     @test eltype(p) == eltype(a)
 
@@ -170,8 +150,6 @@ function test_symmetric_extension(a)
     for i in eachindex(a)
         @test p[i] == a[i]
     end
-
-    test_assignment(p)
 
     firstindex = first(linearindices(a))
     lastindex = last(linearindices(a))
@@ -199,11 +177,11 @@ function test_symmetric_extension(a)
     @test p4[firstindex-1] == -a[firstindex+1]
 
     # A few mixed cases
-    p5 = SymmetricExtension{:wp,:hp,:even,:odd,typeof(a),eltype(a)}(a)
+    p5 = SymmetricSequence{:wp,:hp,:even,:odd,typeof(a),eltype(a)}(a)
     @test p5[lastindex+1] == -a[lastindex-1]
     @test p5[firstindex-1] == a[firstindex]
 
-    p6 = SymmetricExtension{:hp,:wp,:odd,:even,typeof(a),eltype(a)}(a)
+    p6 = SymmetricSequence{:hp,:wp,:odd,:even,typeof(a),eltype(a)}(a)
     @test p6[lastindex+1] ==  a[lastindex]
     @test p6[firstindex-1] == -a[firstindex+1]
 
