@@ -5,6 +5,12 @@
 # Abstract extension type and generic interface
 #################################################
 
+# In general, extension sequences specialize on the type of the underlying
+# data. This means operations with extension sequences are typically fast.
+# Since a point to an array is stored, memory is allocated every time an
+# extension sequence is constructed. This may be avoided in future versions
+# of Julia.
+
 """
 Any subtype of ExtensionSequence embeds an indexable vectorlike object with finite length
 and extends it into a bi-infinite sequence. The extension can be indexed with any
@@ -79,26 +85,30 @@ extensiontype(s::PeriodicSequence) = PeriodicExtension()
 
 
 #######################
-# ZeroPaddingSequence
+# CompactSequence
 #######################
 
 """
-ZeroPaddingSequence extends a vector `a` with zeros to a bi-infinite sequence.
+CompactSequence extends a vector `a` with zeros to a bi-infinite sequence.
 
 The indices of `a` map to `a`. Indices outside this range correspond
 to zero values.
 """
-immutable ZeroPaddingSequence{A,T} <: ExtensionSequence{T}
+immutable CompactSequence{A,T} <: ExtensionSequence{T}
     a :: A
 end
 
-ZeroPaddingSequence{A}(a::A) = ZeroPaddingSequence{A,eltype(A)}(a)
+typealias ZeroPaddingSequence CompactSequence
 
-similar(s::ZeroPaddingSequence, a) = ZeroPaddingSequence(a)
+CompactSequence{A}(a::A) = CompactSequence{A,eltype(A)}(a)
 
-extensiontype(s::ZeroPaddingSequence) = ZeroPadding()
+similar(s::CompactSequence, a) = CompactSequence(a)
 
-iscompact(::ZeroPaddingSequence) = true
+extensiontype(s::CompactSequence) = ZeroPadding()
+
+iscompact(::CompactSequence) = true
+
+nzrange(s::CompactSequence) = linearindices(subvector(s))
 
 
 #######################

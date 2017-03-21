@@ -7,6 +7,7 @@ using OffsetArrays
 include("test_util.jl")
 include("test_sequences.jl")
 include("test_extensions.jl")
+include("test_lazy.jl")
 
 function delimit(s::AbstractString)
     println("############")
@@ -23,6 +24,9 @@ function run_tests()
 
     delimit("Extensions")
     test_extensions()
+
+    delimit("Lazy sequences")
+    test_lazy()
 end
 
 run_tests()
